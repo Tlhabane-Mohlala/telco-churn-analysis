@@ -1,4 +1,4 @@
-# Telco Customer Churn Prediction – Logistic Regression (Databricks + PySpark)
+# Customer Churn Prediction Using Logistic Regression (Python + Databricks)
 
 ## 1. Project Overview
 
@@ -57,4 +57,65 @@ The dataset is a Telco customer churn file (Excel) containing:
 
 For the model, the main target is **`Churn Value`**.
 
+---
+## 🔍 Model Results & Business Interpretation
+
+### 📊 Model Performance
+| Metric | Score |
+|-------|--------|
+| Accuracy | **0.693** |
+| F1-Score | **0.712** |
+| ROC-AUC | **0.735** |
+| True Positives | 284 |
+| True Negatives | 236 |
+| False Positives | 150 |
+| False Negatives | 80 |
+
+---
+
+## 🔥 Top Features Increasing Churn
+| Feature | Coefficient |
+|---------|-------------|
+| Contract: Month-to-Month | +1.243 |
+| Payment: Electronic Check | +0.772 |
+| Internet Service: Fiber Optic | +0.341 |
+| Tech Support = Yes | +0.106 |
+| Phone Service = No | +0.051 |
+| Online Security = No | +0.045 |
+
+---
+
+## ❄ Top Features Decreasing Churn
+| Feature | Coefficient |
+|---------|-------------|
+| Contract: Two-Year | –0.683 |
+| Contract: One-Year | –0.650 |
+| Payment: Bank Transfer | –0.408 |
+| Internet Service: DSL | –0.325 |
+| Payment: Credit Card | –0.313 |
+
+---
+
+## 📈 Churn Rates by Segment
+
+### Contract Type
+- **Month-to-month:** 66%
+- **One-year:** 25%
+- **Two-year:** 27%
+
+### Payment Method
+- **Electronic check:** 66%
+- **Mailed check:** 47%
+- **Credit card:** 45%
+- **Bank transfer:** 42%
+
+---
+
+## 💡 Key Business Insights
+
+1. **Short-term contracts** drive churn → target with retention offers.  
+2. **Electronic check customers** are high-risk → encourage safer payment methods.  
+3. **Fiber optic users** churn more → investigate customer experience.  
+4. **Add-on services matter** — lack of online security or tech support increases churn.  
+5. **Tenure is a stabilizer** — the longer a customer stays, the lower the churn risk.
 ---
