@@ -1,0 +1,170 @@
+# --------------------------------------------------------------
+# 0. LOADING PACKAGES
+# --------------------------------------------------------------
+import pandas as pd
+import numpy as np
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import (
+    accuracy_score, 
+    f1_score, 
+    roc_auc_score, 
+    confusion_matrix
+)
+
+# --------------------------------------------------------------
+# 1. LOADING DATA
+# --------------------------------------------------------------
+df = spark.table("default.churn_full_project_dataset").toPandas()
+
+print("Rows:", len(df))
+print("Columns:", df.shape[1])
+df.head()
+
+# --------------------------------------------------------------
+# 2. CLEAN DATA
+# --------------------------------------------------------------
+
+# Remove customerID
+df = df.drop("customerID", axis=1)
+
+# Convert TotalCharges to numeric
+df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
+
+# Fill missing numeric values
+df["TotalCharges"] = df["TotalCharges"].fillna(df["TotalCharges"].median())
+
+# --------------------------------------------------------------
+# 3. SPLIT COLUMNS
+# --------------------------------------------------------------
+
+categorical_cols = [
+    "gender",
+    "Partner",
+    "Dependents",
+    "PhoneService",
+    "MultipleLines",
+    "InternetService",
+    "OnlineSecurity",
+    "OnlineBackup",
+    "DeviceProtection",
+    "TechSupport",
+    "StreamingTV",
+    "StreamingMovies",
+    "Contract",
+    "PaperlessBilling",
+    "PaymentMethod"
+]
+
+numeric_cols = [
+    "SeniorCitizen",
+    "tenure",
+    "MonthlyCharges",
+    "TotalCharges"
+]
+
+# --------------------------------------------------------------
+# 4. TARGET VARIABLE
+# --------------------------------------------------------------
+df["Churn"] = df["Churn"].map({"Yes": 1, "No": 0})
+
+X = df[categorical_cols + numeric_cols]
+y = df["Churn"]
+
+# --------------------------------------------------------------
+# 5. PREPROCESSING PIPELINE
+# --------------------------------------------------------------
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_cols),
+        ("num", StandardScaler(), numeric_cols)
+    ]
+)
+
+model = LogisticRegression(max_iter=1000)
+
+pipeline = Pipeline(steps=[
+    ("preprocessing", preprocessor),
+    ("model", model)
+])
+
+# --------------------------------------------------------------
+# 6. TRAIN TEST SPLIT
+# --------------------------------------------------------------
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42
+)
+
+# --------------------------------------------------------------
+# 7. TRAIN MODEL
+# --------------------------------------------------------------
+
+pipeline.fit(X_train, y_train)
+print("Model trained successfully.")
+
+# --------------------------------------------------------------
+# 8. PREDICT
+# --------------------------------------------------------------
+
+y_pred = pipeline.predict(X_test)
+y_prob = pipeline.predict_proba(X_test)[:, 1]
+
+# --------------------------------------------------------------
+# 9. EVALUATION
+# --------------------------------------------------------------
+
+accuracy = accuracy_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+auc = roc_auc_score(y_test, y_prob)
+
+print("Accuracy:", accuracy)
+print("F1 Score:", f1)
+print("AUC:", auc)
+
+# CONFUSION MATRIX
+cm = confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:\n", cm)
+
+# --------------------------------------------------------------
+# 10. FEATURE IMPORTANCE (Top Drivers)
+# --------------------------------------------------------------
+
+# Extract encoded feature names
+ohe = pipeline.named_steps["preprocessing"].named_transformers_["cat"]
+encoded_cat_names = ohe.get_feature_names_out(categorical_cols)
+all_features = np.append(encoded_cat_names, numeric_cols)
+
+# Logistic regression coefficients
+coefs = pipeline.named_steps["model"].coef_[0]
+
+# Put into a dataframe
+fi_df = pd.DataFrame({
+    "feature": all_features,
+    "coefficient": coefs
+})
+
+# Sort importance
+top_pos = fi_df.sort_values("coefficient", ascending=False).head(15)
+top_neg = fi_df.sort_values("coefficient", ascending=True).head(15)
+
+print("\nTop factors INCREASING churn:")
+print(top_pos)
+
+print("\nTop factors DECREASING churn:")
+print(top_neg)
+
+# --------------------------------------------------------------
+# 11. BUSINESS INSIGHTS
+# --------------------------------------------------------------
+
+print("\nChurn rate by Contract:")
+print(df.groupby("Contract")["Churn"].mean().sort_values(ascending=False))
+
+print("\nChurn rate by PaymentMethod:")
+print(df.groupby("PaymentMethod")["Churn"].mean().sort_values(ascending=False))
