@@ -119,3 +119,12 @@ For the model, the main target is **`Churn Value`**.
 4. **Add-on services matter** — lack of online security or tech support increases churn.  
 5. **Tenure is a stabilizer** — the longer a customer stays, the lower the churn risk.
 ---
+flowchart TD
+    A[Load Data\nDBFS (Excel)] --> B[Data Cleaning\nDrop unused cols, fix TotalCharges]
+    B --> C[Feature Engineering\nOne-hot encoding & scaling]
+    C --> D[Train/Test Split]
+    D --> E[Train Logistic Regression\nPySpark]
+    E --> F[Evaluate Model\nAccuracy, F1, AUC]
+    F --> G[Interpretation\nCoefficients + Odds Ratios]
+    G --> H[Insights\nRetention Strategy]
+
