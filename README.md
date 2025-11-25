@@ -17,8 +17,6 @@ This repository showcases an end-to-end machine learning workflow including:
 - Logistic Regression model training using PySpark
 - Model evaluation (Accuracy, ROC–AUC)
 - Interpretation using **odds ratios**
-- A **Power BI dashboard** for business users
-
 ---
 
 ## 2. Business Problem
